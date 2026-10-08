@@ -27,13 +27,13 @@ jobs:
         run: npm run build
 
       - name: Verify build output
-        run: ls -la dist/ || echo "dist folder not found"
+        run: ls -la public/ || echo "public folder not found"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: dist
-          path: ./dist
+          name: public
+          path: ./public
 
   deploy:
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
@@ -43,8 +43,8 @@ jobs:
       - name: Download build artifact
         uses: actions/download-artifact@v4
         with:
-          name: dist
-          path: ./dist
+          name: public
+          path: ./public
 
       - name: Setup SSH key
         run: |
@@ -60,7 +60,7 @@ jobs:
             "rm -rf /home/fbmerf3ynq50/public_html/notes/* && mkdir -p /home/fbmerf3ynq50/public_html/notes"
 
           # Copy new files using SCP
-          scp -r -P ${{ secrets.SSH_PORT }} ./dist/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/fbmerf3ynq50/public_html/notes/
+          scp -r -P ${{ secrets.SSH_PORT }} ./public/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/fbmerf3ynq50/public_html/notes/
 
       - name: Verify deployment
         run: |
