@@ -1,0 +1,12 @@
+# Apache: pretty API URLs + single page app fallback
+RewriteEngine On
+RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.html [L]
+
+<IfModule mod_php.c>
+  php_value upload_max_filesize 128M
+  php_value post_max_size 130M
+  php_value memory_limit 512M
+</IfModule>
