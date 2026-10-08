@@ -1,10 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// GitHub Pages serves this project from /countries/, not the domain root,
-// so the production build needs that as its base. Keep the dev server at "/"
-// so `npm run dev` still opens cleanly at http://localhost:5173/.
-export default defineConfig(({ command }) => ({
-  base: command === 'build' ? '/notes/' : '/',
+// Builds straight into ./public (the web root). PHP lives in ./server and ./public/api.
+export default defineConfig({
   plugins: [react()],
-}))
+  base: './',
+  publicDir: false,
+  build: { outDir: 'public', emptyOutDir: false, chunkSizeWarningLimit: 1500, sourcemap: false },
+  server: { port: 5173, proxy: { '/api': 'http://127.0.0.1:8080' } },
+})
