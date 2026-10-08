@@ -188,7 +188,7 @@ export default function App() {
         <div className="boot-card">
           <h2>Can’t reach the Folio server</h2>
           <p className="muted">{loadError}</p>
-          <p className="muted small">Start the app with <code>php -S 127.0.0.1:8080 -t public public/router.php</code> (see the README) and reload.</p>
+          <p className="muted small">Start the app with <code>php -S 127.0.0.1:8080 -t public</code> (or run <code>./start.sh</code>) and reload.</p>
           <button className="btn primary" onClick={() => { useStore.setState({ loadError: null }); init() }}>Try again</button>
         </div>
       </div>
