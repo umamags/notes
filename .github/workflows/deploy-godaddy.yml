@@ -26,6 +26,9 @@ jobs:
       - name: Build application
         run: npm run build
 
+      - name: Verify build output
+        run: ls -la dist/ || echo "dist folder not found"
+
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
