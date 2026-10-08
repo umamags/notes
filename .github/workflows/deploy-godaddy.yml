@@ -46,14 +46,6 @@ jobs:
           name: public
           path: ./public
 
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts || true
-          cat ~/.ssh/known_hosts
-
       - name: Deploy to GoDaddy
         run: |
           # Remove existing files in target directory and deploy new ones
