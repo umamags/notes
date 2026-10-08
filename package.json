@@ -1,13 +1,12 @@
 {
-  "name": "folio",
+  "name": "notes",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "prebuild": "rm -rf public/assets",
-    "build": "vite build",
-    "serve": "php -d upload_max_filesize=128M -d post_max_size=130M -d memory_limit=512M -S 127.0.0.1:8080 -t public public/router.php"
+    "build": "vite build"
   },
   "dependencies": {
     "@codemirror/autocomplete": "^6.20.3",
