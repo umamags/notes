@@ -1,2 +1,2 @@
 <?php
-require __DIR__ . '/../../server/app.php';
+require __DIR__ . '/app.php';
