@@ -63,6 +63,25 @@ jobs:
           # Copy new files using SCP
           scp -r -P ${{ secrets.SSH_PORT }} ./public/* ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/home/fbmerf3ynq50/public_html/notes/
 
+      - name: Write .htaccess file
+        run: |
+          ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'HTACCESS'
+          cat > /home/fbmerf3ynq50/public_html/notes/.htaccess << 'EOF'
+          # Apache: pretty API URLs + single page app fallback
+          RewriteEngine On
+          RewriteRule ^api/(.*)$ api/index.php [QSA,L]
+          RewriteCond %{REQUEST_FILENAME} !-f
+          RewriteCond %{REQUEST_FILENAME} !-d
+          RewriteRule ^ index.html [L]
+
+          <IfModule mod_php.c>
+            php_value upload_max_filesize 128M
+            php_value post_max_size 130M
+            php_value memory_limit 512M
+          </IfModule>
+          EOF
+          HTACCESS
+
       - name: Verify deployment
         run: |
           ssh -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} \

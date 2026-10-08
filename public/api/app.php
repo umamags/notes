@@ -6,6 +6,31 @@ declare(strict_types=1);
  * Configure the storage location with the FOLIO_STORAGE environment variable (defaults to ../storage).
  */
 
+// Check if required lib files exist
+$requiredFiles = [
+    'lib/util.php',
+    'lib/store.php',
+    'lib/search.php',
+    'lib/unfurl.php',
+    'lib/files.php',
+    'lib/export.php',
+    'lib/seed.php',
+];
+
+foreach ($requiredFiles as $file) {
+    $path = __DIR__ . '/' . $file;
+    if (!is_file($path)) {
+        http_response_code(500);
+        header('Content-Type: application/json');
+        die(json_encode([
+            'error' => "Missing required file: $file",
+            'path' => $path,
+            'currentDir' => __DIR__,
+            'filesInDir' => scandir(__DIR__),
+        ]));
+    }
+}
+
 require __DIR__ . '/lib/util.php';
 require __DIR__ . '/lib/store.php';
 require __DIR__ . '/lib/search.php';
@@ -21,9 +46,17 @@ set_error_handler(function (int $no, string $str, string $file, int $line): bool
     throw new ErrorException($str, 0, $no, $file, $line);
 });
 set_exception_handler(function (Throwable $e): void {
-    error_log('[folio] ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
+    $msg = $e->getMessage();
+    $file = $e->getFile();
+    $line = $e->getLine();
+    error_log("[folio] $msg @ $file:$line");
     if (!headers_sent()) {
-        send_json(['error' => 'Server error: ' . $e->getMessage()], 500);
+        send_json([
+            'error' => "Server error: $msg",
+            'type' => class_basename($e),
+            'file' => $file,
+            'line' => $line,
+        ], 500);
     }
 });
 
@@ -502,6 +535,25 @@ switch ($seg[0] ?? '') {
     case 'health':
         send_json(['ok' => true, 'time' => now_ms()]);
 
+    case 'diagnostics':
+        send_json([
+            'ok' => true,
+            'php' => PHP_VERSION,
+            'storage' => $storageRoot ?? 'not initialized',
+            'request' => [
+                'method' => $method,
+                'uri' => $_SERVER['REQUEST_URI'] ?? 'unknown',
+                'path' => $uriPath,
+                'route' => $route,
+                'segments' => $seg,
+            ],
+            'environment' => [
+                'host' => $_SERVER['HTTP_HOST'] ?? 'unknown',
+                'scriptName' => $_SERVER['SCRIPT_NAME'] ?? 'unknown',
+                'scriptFilename' => $_SERVER['SCRIPT_FILENAME'] ?? 'unknown',
+            ],
+        ]);
+
     default:
-        fail(404, 'Unknown endpoint');
+        fail(404, "Unknown endpoint: $route. Available: bootstrap, notes, notebooks, tags, search, upload, files, unfurl, export, maintenance, stats, health, diagnostics");
 }
