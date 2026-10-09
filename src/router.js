@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
 
-// Hash routes:  #/home   #/all/n/<id>   #/notebook/<nid>/n/<id>   #/tag/<tag>   #/pinned   #/research   #/trash   #/search/<q>
+// Hash routes:  #/home   #/all/n/<id>   #/notebook/<nid>/n/<id>   #/tag/<tag>   #/pinned   #/research   #/todos   #/trash   #/search/<q>
 export function parseHash(hash) {
   const parts = hash.replace(/^#\/?/, '').split('/').map((p) => {
     try {
@@ -15,6 +15,7 @@ export function parseHash(hash) {
     case 'all':
     case 'pinned':
     case 'research':
+    case 'todos':
     case 'trash':
       view = { kind: parts[0] }
       break

@@ -1,5 +1,5 @@
 import { memo, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { ArrowDownUp, Check, Copy, Download, FilePlus2, Library, PanelLeftClose, Pin, PinOff, Plus, RotateCcw, Search, Trash2, X, FileText, Image as ImageIcon, Link2, Folder, Quote, ArrowLeft } from 'lucide-react'
+import { ArrowDownUp, Check, Copy, Download, FilePlus2, Library, ListTodo, PanelLeftClose, Pin, PinOff, Plus, RotateCcw, Search, Trash2, X, FileText, Image as ImageIcon, Link2, Folder, Quote, ArrowLeft } from 'lucide-react'
 import { api } from '../api.js'
 import { useStore, notesForView, sortNotes, viewTitle, notebookMap } from '../store.js'
 import { go, openNoteId, useRoute } from '../router.js'
@@ -81,6 +81,11 @@ export const NoteRow = memo(function NoteRow({ note, active, nbName, nbColor, sh
             <Library size={11} /> Research
           </span>
         )}
+        {note.type === 'todo' && (
+          <span className="chip todo" title="ToDo list">
+            <ListTodo size={11} /> {note.todo?.open ?? 0} open
+          </span>
+        )}
         {showNotebook && nbName && (
           <span className="chip nb">
             <span className={cx('dot', 'c-' + (nbColor || 'slate'))} />
@@ -133,6 +138,9 @@ function useRowActions() {
   return [onContext, el]
 }
 
+const newType = (view) => (view.kind === 'research' ? 'research' : view.kind === 'todos' ? 'todo' : 'page')
+const newLabel = (view) => ({ research: 'New research note', todos: 'New ToDo' })[view.kind] || 'New note'
+
 function EmptyFor({ view, filtered }) {
   const createNote = useStore((s) => s.createNote)
   if (filtered) return <Empty icon={<Search size={22} />} title="Nothing matches">Try a different filter.</Empty>
@@ -140,6 +148,7 @@ function EmptyFor({ view, filtered }) {
     trash: ['Trash is empty', 'Deleted notes stay here until you empty the trash.'],
     pinned: ['Nothing pinned yet', 'Pin the notes you reach for daily and they will appear here and in the sidebar.'],
     research: ['No research notes yet', 'Research notes collect links, quotes, screenshots and PDFs next to your own writing.'],
+    todos: ['No ToDos yet', 'A ToDo is a checklist. Each item has notes, a status and a priority.'],
     tag: ['No notes with this tag', ''],
     notebook: ['This notebook is empty', 'Create a note here, or drag notes onto it from the list.'],
   }
@@ -149,8 +158,8 @@ function EmptyFor({ view, filtered }) {
       {text}
       {view.kind !== 'trash' && (
         <div style={{ marginTop: 14 }}>
-          <button className="btn primary sm" onClick={() => createNote({ type: view.kind === 'research' ? 'research' : 'page' })}>
-            <Plus size={14} /> New {view.kind === 'research' ? 'research note' : 'note'}
+          <button className="btn primary sm" onClick={() => createNote({ type: newType(view) })}>
+            <Plus size={14} /> {newLabel(view)}
           </button>
         </div>
       )}
@@ -235,7 +244,7 @@ function PlainList({ view, activeId }) {
               Empty
             </button>
           ) : (
-            <button className="icon-btn sm accent" title="New note (Alt+N)" onClick={() => createNote({ type: view.kind === 'research' ? 'research' : 'page' })}>
+            <button className="icon-btn sm accent" title={view.kind === 'todos' ? 'New ToDo' : 'New note (Alt+N)'} onClick={() => createNote({ type: newType(view) })}>
               <Plus size={17} />
             </button>
           )}

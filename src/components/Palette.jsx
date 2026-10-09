@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Command, CornerDownLeft, FilePlus2, FileText, FileUp, Folder, Hash, Home as HomeIcon, Inbox, Library, Moon, PanelLeft, PanelRight, Pencil, Pin, Search, Settings as SettingsIcon, Sun,
+  Command, CornerDownLeft, FilePlus2, FileText, FileUp, Folder, Hash, Home as HomeIcon, Inbox, Library, ListTodo, Moon, PanelLeft, PanelRight, Pencil, Pin, Search, Settings as SettingsIcon, Sun,
   Trash2, Eye, Columns2, Keyboard, History, Download, Zap, Monitor, ArrowRight,
 } from 'lucide-react'
 import { api } from '../api.js'
@@ -40,12 +40,14 @@ export function useCommands() {
     const cmds = [
       { id: 'new', label: 'New note', icon: FilePlus2, shortcut: 'Alt N', run: () => st.createNote({}) },
       { id: 'new-research', label: 'New research note', icon: Library, shortcut: 'Alt ⇧ N', run: () => st.createNote({ type: 'research' }) },
+      { id: 'new-todo', label: 'New ToDo', icon: ListTodo, run: () => st.createNote({ type: 'todo' }) },
       { id: 'capture', label: 'Quick capture to Inbox', icon: Zap, run: () => go({ kind: 'home' }) },
       { id: 'import-pdf', label: 'Import PDF…', icon: FileUp, run: async () => importFiles(await pickFiles('application/pdf')) },
       { id: 'import-md', label: 'Import Markdown files…', icon: FileText, run: async () => importFiles(await pickFiles('.md,.markdown,.txt')) },
       { id: 'home', label: 'Go to Home', icon: HomeIcon, run: () => go({ kind: 'home' }) },
       { id: 'all', label: 'Go to All notes', icon: Inbox, run: () => go({ kind: 'all' }) },
       { id: 'research', label: 'Go to Research', icon: Library, run: () => go({ kind: 'research' }) },
+      { id: 'todos', label: 'Go to ToDos', icon: ListTodo, run: () => go({ kind: 'todos' }) },
       { id: 'pinned', label: 'Go to Pinned', icon: Pin, run: () => go({ kind: 'pinned' }) },
       { id: 'trash', label: 'Go to Trash', icon: Trash2, run: () => go({ kind: 'trash' }) },
       { id: 'search', label: 'Open full search', icon: Search, shortcut: `${modKey} ⇧ F`, run: () => go({ kind: 'search', q: '' }) },

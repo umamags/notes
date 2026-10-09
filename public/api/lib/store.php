@@ -169,7 +169,7 @@ final class Store
             'title' => '', 'body' => '', 'type' => 'page', 'notebook' => 'inbox', 'tags' => [],
             'pinned' => false, 'trashed' => false, 'trashedAt' => null, 'created' => now_ms(),
             'updated' => now_ms(), 'clips' => [], 'source' => ['url' => '', 'author' => '', 'site' => '', 'published' => ''],
-            'status' => '',
+            'status' => '', 'items' => [],
         ];
     }
 
@@ -200,7 +200,7 @@ final class Store
         if (array_key_exists('body', $in)) {
             $note['body'] = str_clip((string) $in['body'], 2_000_000);
         }
-        if (isset($in['type']) && in_array($in['type'], ['page', 'research'], true)) {
+        if (isset($in['type']) && in_array($in['type'], ['page', 'research', 'todo'], true)) {
             $note['type'] = $in['type'];
         }
         if (array_key_exists('notebook', $in)) {
@@ -229,7 +229,49 @@ final class Store
         if (isset($in['status']) && in_array($in['status'], ['', 'to-read', 'reading', 'done'], true)) {
             $note['status'] = $in['status'];
         }
+        if (isset($in['items']) && is_array($in['items'])) {
+            $note['items'] = self::cleanItems($in['items']);
+        }
         return $note;
+    }
+
+    /** ToDo list items: text, notes (Markdown), status and priority. */
+    public static function cleanItems(array $items): array
+    {
+        $out = [];
+        foreach ($items as $it) {
+            if (!is_array($it)) {
+                continue;
+            }
+            $out[] = [
+                'id' => valid_id($it['id'] ?? null) ? $it['id'] : new_id(8),
+                'text' => str_clip(trim((string) ($it['text'] ?? '')), 500),
+                'notes' => str_clip((string) ($it['notes'] ?? ''), 50000),
+                'status' => in_array($it['status'] ?? '', ['open', 'in-progress', 'done'], true) ? $it['status'] : 'open',
+                'priority' => in_array($it['priority'] ?? '', ['high', 'medium', 'low'], true) ? $it['priority'] : 'medium',
+                'created' => is_int($it['created'] ?? null) ? $it['created'] : now_ms(),
+            ];
+            if (count($out) >= 500) {
+                break;
+            }
+        }
+        return $out;
+    }
+
+    /** @return array{open: int, total: int, high: int} */
+    public static function todoSummary(array $items): array
+    {
+        $open = 0;
+        $high = 0;
+        foreach ($items as $it) {
+            if (($it['status'] ?? '') !== 'done') {
+                $open++;
+                if (($it['priority'] ?? '') === 'high') {
+                    $high++;
+                }
+            }
+        }
+        return ['open' => $open, 'total' => count($items), 'high' => $high];
     }
 
     public static function cleanTags(array $tags): array
@@ -296,6 +338,15 @@ final class Store
     {
         $plain = md_plain($n['body']);
         $snippet = $plain;
+        if ($n['type'] === 'todo') {
+            $open = [];
+            foreach ($n['items'] as $it) {
+                if ($it['status'] !== 'done' && $it['text'] !== '') {
+                    $open[] = $it['text'];
+                }
+            }
+            $snippet = implode(' · ', array_slice($open, 0, 3));
+        }
         if ($snippet === '' && !empty($n['clips'])) {
             foreach ($n['clips'] as $c) {
                 $t = $c['text'] ?? $c['title'] ?? $c['caption'] ?? $c['name'] ?? '';
@@ -324,6 +375,7 @@ final class Store
             'links' => extract_links($n['body']),
             'clips' => $kinds,
             'status' => $n['status'] ?? '',
+            'todo' => $n['type'] === 'todo' ? self::todoSummary($n['items']) : null,
             'sample' => !empty($n['sample']),
             'rev' => (int) ($n['rev'] ?? 0),
         ];
@@ -465,6 +517,7 @@ final class Store
             'id' => $id, 'at' => $at, 'label' => str_clip(trim($label), 120),
             'title' => $note['title'], 'body' => $note['body'], 'tags' => $note['tags'],
             'type' => $note['type'], 'clips' => $note['clips'], 'source' => $note['source'] ?? null,
+            'items' => $note['items'] ?? [],
             'words' => count_words(md_plain($note['body'])),
         ];
         write_json($this->versionsDir($note['id']) . '/' . $at . '_' . $id . '.json', $v);
@@ -496,11 +549,11 @@ final class Store
     public function maybeSnapshotBefore(array $before, array $after): void
     {
         $changed = $before['title'] !== $after['title'] || $before['body'] !== $after['body']
-            || $before['clips'] != $after['clips'] || $before['tags'] != $after['tags'];
+            || $before['clips'] != $after['clips'] || $before['tags'] != $after['tags'] || $before['items'] != $after['items'];
         if (!$changed) {
             return;
         }
-        $hadContent = trim($before['body']) !== '' || !empty($before['clips']) || trim($before['title']) !== '';
+        $hadContent = trim($before['body']) !== '' || !empty($before['clips']) || !empty($before['items']) || trim($before['title']) !== '';
         if (!$hadContent) {
             return;
         }

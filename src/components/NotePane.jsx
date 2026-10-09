@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowLeft, Bold, BookOpen, CheckSquare, ChevronRight, Code, Columns2, Copy, Download, ExternalLink, FileText, FileType2, Heading2, History, Italic, Library, Link as LinkIcon, List, ListOrdered,
-  MoreHorizontal, PanelLeft, PanelRight, Pencil, Pin, PinOff, Plus, Quote, Image as ImageIcon, RefreshCw, RotateCcw, Trash2, X, Braces, Eye, Printer, FileJson, FileCode2, ArrowRightLeft, Brackets, Files, Strikethrough,
+  MoreHorizontal, PanelLeft, PanelRight, Pencil, Pin, PinOff, Plus, Quote, Image as ImageIcon, RefreshCw, RotateCcw, Trash2, X, Braces, Eye, Printer, FileJson, FileCode2, ArrowRightLeft, Brackets, Files, Strikethrough, ListTodo,
 } from 'lucide-react'
 import { api, fileUrl } from '../api.js'
 import { useStore, makeResolver, notebookPath } from '../store.js'
@@ -14,6 +14,7 @@ import Editor from './Editor.jsx'
 import Preview from './Preview.jsx'
 import Sources from './Sources.jsx'
 import Inspector from './Inspector.jsx'
+import TodoView from './Todos.jsx'
 import TagInput from './TagInput.jsx'
 import { Empty, Menu, Modal, Segmented } from './ui.jsx'
 
@@ -124,6 +125,7 @@ function Tabs({ activeId, isMobile }) {
               title={titleOf(n)}
             >
               {n.type === 'research' && <Library size={12} className="tab-ico" />}
+              {n.type === 'todo' && <ListTodo size={12} className="tab-ico" />}
               <span className="tab-title">{titleOf(n)}</span>
               <button className="tab-x" aria-label="Close tab" onClick={(e) => { e.stopPropagation(); closeTab(t) }}>
                 <X size={13} />
@@ -243,6 +245,7 @@ function NoteView({ note, isMobile }) {
   const trashed = !!entry?.trashed
   const mode = trashed ? 'read' : ui.mode || settings.defaultView
   const research = note.type === 'research'
+  const todo = note.type === 'todo'
   const resolve = useMemo(() => makeResolver(notes), [notes])
   const path = notebookPath(notebooks, note.notebook)
 
@@ -335,7 +338,7 @@ function NoteView({ note, isMobile }) {
   const moreItems = () => [
     { label: 'Duplicate', icon: Copy, onClick: () => duplicateNote(id) },
     { label: 'Copy link  [[title]]', icon: Brackets, onClick: copyLink },
-    { label: research ? 'Convert to page' : 'Convert to research note', icon: ArrowRightLeft, onClick: convert },
+    ...(todo ? [] : [{ label: research ? 'Convert to page' : 'Convert to research note', icon: ArrowRightLeft, onClick: convert }]),
     { label: 'Version history', icon: History, onClick: () => setUI({ history: id }) },
     { divider: true },
     { header: 'Move to notebook' },
@@ -344,8 +347,8 @@ function NoteView({ note, isMobile }) {
     { label: 'Move to Trash', icon: Trash2, danger: true, onClick: () => trashNote(id) },
   ]
 
-  const showEditor = mode === 'write' || mode === 'split'
-  const showPreview = mode === 'read' || mode === 'split'
+  const showEditor = !todo && (mode === 'write' || mode === 'split')
+  const showPreview = !todo && (mode === 'read' || mode === 'split')
 
   return (
     <main className="notepane" data-mode={mode}>
@@ -371,7 +374,7 @@ function NoteView({ note, isMobile }) {
             </nav>
             <div className="grow" />
             <span className={cx('sync', sync)} aria-live="polite">{syncLabel}</span>
-            {!trashed && (
+            {!trashed && !todo && (
               <Segmented
                 size="sm"
                 value={mode}
@@ -456,6 +459,7 @@ function NoteView({ note, isMobile }) {
                 <input ref={imgInput} type="file" accept="image/*" hidden multiple onChange={(e) => { handleFiles([...e.target.files]); e.target.value = '' }} />
 
                 <div className={cx('content', mode)}>
+                  {todo && <TodoView note={note} readOnly={trashed} />}
                   <div className="editor-wrap" style={{ display: showEditor ? '' : 'none' }}>
                     <Editor
                       ref={editorRef}
@@ -494,7 +498,7 @@ function NoteView({ note, isMobile }) {
                 <div className="doc-foot">
                   <span>{fullDate(entry?.updated || note.updated)}</span>
                   <span>·</span>
-                  <span>{(entry?.words ?? 0).toLocaleString()} words</span>
+                  {todo ? <span>{entry?.todo?.open ?? 0} open</span> : <span>{(entry?.words ?? 0).toLocaleString()} words</span>}
                 </div>
               </div>
 

@@ -97,7 +97,7 @@ function ini_bytes(string $key): int
     return match (strtolower(substr($v, -1))) { 'g' => $n << 30, 'm' => $n << 20, 'k' => $n << 10, default => $n };
 }
 
-const CONTENT_KEYS = ['title', 'body', 'clips', 'tags', 'source', 'type', 'status'];
+const CONTENT_KEYS = ['title', 'body', 'clips', 'tags', 'source', 'type', 'status', 'items'];
 
 function content_changed(array $a, array $b): bool
 {
@@ -216,7 +216,7 @@ switch ($seg[0] ?? '') {
                     $before = $note;
                     $after = $store->applyPatch($note, $in);
                     $touchesContent = false;
-                    foreach (['title', 'body', 'clips'] as $k) { if (array_key_exists($k, $in)) { $touchesContent = true; } }
+                    foreach (['title', 'body', 'clips', 'items'] as $k) { if (array_key_exists($k, $in)) { $touchesContent = true; } }
                     if ($touchesContent && isset($in['baseRev']) && empty($in['force'])
                         && (int) ($before['rev'] ?? 0) !== (int) $in['baseRev'] && content_changed($before, $after)) {
                         fail(409, 'This note was changed somewhere else', ['note' => $before]);
@@ -227,7 +227,7 @@ switch ($seg[0] ?? '') {
                         $store->maybeSnapshotBefore($before, $after);
                     }
                     if (isset($in['pinned']) && (bool) $in['pinned'] !== (bool) $before['pinned']) { $after['pinned'] = (bool) $in['pinned']; }
-                    $bump = $before['title'] !== $after['title'] || $before['body'] !== $after['body'] || $before['clips'] != $after['clips'];
+                    $bump = $before['title'] !== $after['title'] || $before['body'] !== $after['body'] || $before['clips'] != $after['clips'] || $before['items'] != $after['items'];
                     $entry = $store->persist($after, $bump);
                     $touched = [];
                     if ($before['title'] !== $after['title']) {
@@ -309,6 +309,7 @@ switch ($seg[0] ?? '') {
                     $note['body'] = $v['body'];
                     $note['tags'] = $v['tags'] ?? $note['tags'];
                     $note['clips'] = $v['clips'] ?? $note['clips'];
+                    $note['items'] = $v['items'] ?? $note['items'];
                     if (!empty($v['type'])) { $note['type'] = $v['type']; }
                     $note['updated'] = now_ms();
                     $entry = $store->persist($note);

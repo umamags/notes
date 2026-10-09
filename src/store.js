@@ -15,7 +15,40 @@ export const DEFAULT_SETTINGS = {
   listSort: 'updated',
 }
 
-const CONTENT_KEYS = ['title', 'body', 'clips']
+const CONTENT_KEYS = ['title', 'body', 'clips', 'items']
+
+export const TODO_STATUS = [
+  { value: 'open', label: 'Open' },
+  { value: 'in-progress', label: 'In progress' },
+  { value: 'done', label: 'Done' },
+]
+export const TODO_PRIORITY = [
+  { value: 'high', label: 'High' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'low', label: 'Low' },
+]
+
+/** Mirrors Store::todoSummary() on the server, for live updates before a save round-trip. */
+export function todoSummary(items = []) {
+  let open = 0
+  let high = 0
+  for (const it of items) {
+    if (it.status !== 'done') {
+      open++
+      if (it.priority === 'high') high++
+    }
+  }
+  return { open, total: items.length, high }
+}
+
+/** Snippet for list rows: the first few open item titles. */
+function todoSnippet(items = []) {
+  return items
+    .filter((it) => it.status !== 'done' && it.text)
+    .slice(0, 3)
+    .map((it) => it.text)
+    .join(' · ')
+}
 
 // non-reactive bookkeeping for saving
 const mem = {
@@ -43,6 +76,10 @@ function deriveEntry(prev, note, keys) {
   if (keys.has('notebook')) e.notebook = note.notebook
   if (keys.has('type')) e.type = note.type
   if (keys.has('status')) e.status = note.status
+  if (keys.has('items')) {
+    e.todo = todoSummary(note.items)
+    if (note.type === 'todo') e.snippet = todoSnippet(note.items).slice(0, 180)
+  }
   if (keys.has('body') || keys.has('clips')) {
     const plain = plainText(note.body || '')
     e.snippet = (plain || clipSummary(note.clips)).slice(0, 180)
@@ -52,7 +89,7 @@ function deriveEntry(prev, note, keys) {
     for (const c of note.clips || []) kinds[c.kind] = (kinds[c.kind] || 0) + 1
     e.clips = kinds
   }
-  if (['title', 'body', 'clips', 'tags', 'source', 'type', 'status'].some((k) => keys.has(k))) e.updated = Date.now()
+  if (['title', 'body', 'clips', 'items', 'tags', 'source', 'type', 'status'].some((k) => keys.has(k))) e.updated = Date.now()
   return e
 }
 
@@ -601,6 +638,8 @@ export function notesForView(notes, view, notebooks) {
       return all.filter((n) => !n.trashed && n.pinned)
     case 'research':
       return all.filter((n) => !n.trashed && n.type === 'research')
+    case 'todos':
+      return all.filter((n) => !n.trashed && n.type === 'todo')
     case 'notebook': {
       const ids = new Set(notebookDescendants(notebooks, view.id))
       return all.filter((n) => !n.trashed && ids.has(n.notebook))
@@ -629,6 +668,7 @@ export function viewTitle(view, notebooks) {
     case 'all': return 'All notes'
     case 'pinned': return 'Pinned'
     case 'research': return 'Research'
+    case 'todos': return 'ToDos'
     case 'trash': return 'Trash'
     case 'tag': return `#${view.tag}`
     case 'search': return 'Search'

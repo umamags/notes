@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { ArrowRight, FileUp, FilePlus2, Library, PanelLeft, Pin, Search, Zap, Clock, Folder, Hash } from 'lucide-react'
+import { ArrowRight, FileUp, FilePlus2, Library, ListTodo, PanelLeft, Pin, Search, Zap, Clock, Folder, Hash } from 'lucide-react'
 import { useStore, notebookMap, notebookDescendants, notebookPath } from '../store.js'
 import { go, openNoteId } from '../router.js'
 import { cx, dayGroup, greeting, modKey, relTime, titleOf, todayLabel } from '../lib/util.js'
@@ -126,6 +126,10 @@ export default function Home() {
           <button className="qa" onClick={() => createNote({ type: 'research' })}>
             <Library size={17} />
             <span>New research note</span>
+          </button>
+          <button className="qa" onClick={() => createNote({ type: 'todo' })}>
+            <ListTodo size={17} />
+            <span>New ToDo</span>
           </button>
           <button className="qa" onClick={async () => importFiles(await pickFiles('application/pdf'))}>
             <FileUp size={17} />

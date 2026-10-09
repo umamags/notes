@@ -188,7 +188,7 @@ function InfoTab({ note, entry }) {
         <dt>Tags</dt>
         <dd><TagInput compact tags={note.tags} onChange={(t) => setTags(note.id, t)} /></dd>
         <dt>Type</dt>
-        <dd>{note.type === 'research' ? 'Research note' : 'Page'}</dd>
+        <dd>{note.type === 'research' ? 'Research note' : note.type === 'todo' ? 'ToDo list' : 'Page'}</dd>
         <dt>Words</dt>
         <dd>{words.toLocaleString()} · {readingTime(words)} min read</dd>
         <dt>Characters</dt>

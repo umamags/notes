@@ -34,6 +34,7 @@ outside the web root if you can (it contains an `.htaccess` deny file as a fallb
 | Home | Quick capture, pinned notes, recent notes by day, reading queue, notebooks, tags |
 | Universal search | Titles, bodies, tags, collected sources and **text inside imported PDFs**. Operators: `tag:` `in:` `type:` `is:pinned` `has:pdf` `status:` `before:` `after:` `"phrases"` `-exclude` |
 | Research notes | Collect links (title/site fetched for you), quotes, screenshots, PDFs, text; reading status, source, author |
+| ToDo lists | Checklists with per-item notes (Markdown), status (Open / In progress / Done), priority (High / Medium / Low) and an All / Open filter |
 | Backlinks | Write `[[Title]]`; the Links panel lists backlinks and unlinked mentions; renames update links elsewhere |
 | PDF import | Drop or pick a PDF: stored as-is, thumbnail + text extracted in your browser, searchable |
 | Version history | Automatic snapshots after pauses, named checkpoints (`Ctrl/⌘ S`), line diff, preview, restore (current state is saved first) |

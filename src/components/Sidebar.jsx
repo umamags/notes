@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import {
   BookOpen, ChevronDown, ChevronRight, Download, FileUp, FolderPlus, Hash, Home, Library, MoreHorizontal, Moon, Pin, Plus, Search, Settings, Sun, Monitor,
-  Trash2, FilePlus2, PanelLeftClose, Inbox, Pencil, Palette, StickyNote,
+  Trash2, FilePlus2, PanelLeftClose, Inbox, Pencil, Palette, StickyNote, ListTodo,
 } from 'lucide-react'
 import { useStore, notebookDescendants } from '../store.js'
 import { go, useRoute } from '../router.js'
@@ -54,10 +54,12 @@ export default function Sidebar({ mobile }) {
     const direct = {}
     const tagMap = {}
     let research = 0
+    let todos = 0
     const pins = []
     for (const n of live) {
       direct[n.notebook] = (direct[n.notebook] || 0) + 1
       if (n.type === 'research') research++
+      if (n.type === 'todo') todos++
       if (n.pinned) pins.push(n)
       for (const t of n.tags) tagMap[t] = (tagMap[t] || 0) + 1
     }
@@ -69,7 +71,7 @@ export default function Sidebar({ mobile }) {
     }
     pins.sort((a, b) => b.updated - a.updated)
     return {
-      counts: { all: live.length, research, pinned: pins.length, trash: Object.values(notes).length - live.length },
+      counts: { all: live.length, research, todos, pinned: pins.length, trash: Object.values(notes).length - live.length },
       nbCounts: total,
       tags: Object.entries(tagMap).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])),
       pinned: pins,
@@ -215,6 +217,7 @@ export default function Sidebar({ mobile }) {
           items={[
             { label: 'New note', icon: FilePlus2, shortcut: 'Alt N', onClick: () => createNote({}) },
             { label: 'New research note', icon: Library, shortcut: 'Alt ⇧ N', onClick: () => createNote({ type: 'research' }) },
+            { label: 'New ToDo', icon: ListTodo, onClick: () => createNote({ type: 'todo' }) },
             { divider: true },
             { label: 'Import PDF…', icon: FileUp, onClick: async () => importFiles(await pickFiles('application/pdf')) },
             { label: 'Import Markdown…', icon: StickyNote, onClick: async () => importFiles(await pickFiles('.md,.markdown,.txt')) },
@@ -238,6 +241,7 @@ export default function Sidebar({ mobile }) {
           <NavItem icon={Home} label="Home" active={view.kind === 'home'} onClick={() => nav({ kind: 'home' })} />
           <NavItem icon={Inbox} label="All notes" count={counts.all} active={view.kind === 'all'} onClick={() => nav({ kind: 'all' })} />
           <NavItem icon={Library} label="Research" count={counts.research} active={view.kind === 'research'} onClick={() => nav({ kind: 'research' })} />
+          <NavItem icon={ListTodo} label="ToDos" count={counts.todos} active={view.kind === 'todos'} onClick={() => nav({ kind: 'todos' })} />
         </div>
 
         {pinned.length > 0 && (

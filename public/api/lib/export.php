@@ -87,6 +87,24 @@ function clips_to_markdown(Store $store, array $clips, string $prefix, array &$a
     return implode("\n", $out);
 }
 
+/** ToDo items as a Markdown task list; item notes are indented under their task. */
+function todo_to_markdown(array $items): string
+{
+    $lines = [];
+    foreach ($items as $it) {
+        $meta = [];
+        if ($it['status'] === 'in-progress') { $meta[] = 'in progress'; }
+        if ($it['priority'] !== 'medium') { $meta[] = $it['priority'] . ' priority'; }
+        $line = '- [' . ($it['status'] === 'done' ? 'x' : ' ') . '] ' . $it['text'];
+        if ($meta) { $line .= ' _(' . implode(', ', $meta) . ')_'; }
+        $lines[] = $line;
+        if (trim($it['notes']) !== '') {
+            foreach (explode("\n", rtrim($it['notes'])) as $l) { $lines[] = '    ' . $l; }
+        }
+    }
+    return implode("\n", $lines);
+}
+
 function note_to_markdown(Store $store, array $note, array $notebooks, string $prefix, array &$assets): string
 {
     $fm = ['---'];
@@ -106,7 +124,9 @@ function note_to_markdown(Store $store, array $note, array $notebooks, string $p
     $fm[] = 'updated: ' . format_iso((int) $note['updated']);
     $fm[] = '---';
 
-    $body = rewrite_asset_links($store, (string) $note['body'], $prefix, $assets);
+    $body = $note['type'] === 'todo'
+        ? todo_to_markdown($note['items'])
+        : rewrite_asset_links($store, (string) $note['body'], $prefix, $assets);
     $title = $note['title'] !== '' ? '# ' . $note['title'] . "\n\n" : '';
     $sources = $note['type'] === 'research' ? clips_to_markdown($store, $note['clips'], $prefix, $assets) : '';
     return implode("\n", $fm) . "\n\n" . $title . rtrim($body) . "\n" . ($sources !== '' ? "\n" . rtrim($sources) . "\n" : '');
